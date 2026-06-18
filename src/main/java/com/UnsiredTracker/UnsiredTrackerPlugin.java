@@ -15,6 +15,8 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.events.OverlayMenuClicked;
+import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import java.util.Set;
@@ -37,10 +39,10 @@ public class UnsiredTrackerPlugin extends Plugin
 
 
 	private static final Pattern KC_PATTERN =
-			Pattern.compile("Your Abyssal Sire kill count is: (\\d+)");
+			Pattern.compile("Your Abyssal Sire kill count is: ([\\d,]+)");
 
 	private static final String UNSIRED_DROP_MESSAGE =
-			"Untradeable drop: Unsired";
+			"<col=ef1020>Untradeable drop: Unsired</col>";
 
 	@Inject
 	private Client client;
@@ -121,29 +123,112 @@ public class UnsiredTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onOverlayMenuClicked(OverlayMenuClicked event)
+	{
+		if (event.getOverlay() != overlay)
+		{
+			return;
+		}
+
+		String option = event.getEntry().getOption();
+		String target = event.getEntry().getTarget();
+
+		if (!option.equals("Reset"))
+		{
+			return;
+		}
+
+		switch (target)
+		{
+			case "All Stats":
+				resetAllStats();
+				break;
+
+			case "Last Unsired KC":
+				resetLastUnsiredKC();
+				break;
+
+			case "Longest Dry":
+				resetDryStreak();
+				break;
+
+			case "Most Spooned":
+				resetBestStreak();
+				break;
+		}
+	}
+
+	@Subscribe
+	public void onConfigChanged(ConfigChanged event) {
+		if (!event.getGroup().equals("unsiredtracker")) {
+			return;
+		}
+
+		if (config.applyBaselineKC()) {
+			lastUnsiredKC = config.baselineUnsiredKC();
+
+			recalculateKillsSinceLastUnsired();
+
+			saveAllStats();
+
+			configManager.setConfiguration(
+					"unsiredtracker",
+					"applyBaselineKC",
+					false
+			);
+
+			log.debug(
+					"Applied baseline KC {}. Current KC: {}. Current dry: {}",
+					lastUnsiredKC,
+					currentSireKC,
+					killsSinceLastUnsired
+			);
+		}
+	}
+
+	@Subscribe
 	public void onChatMessage(ChatMessage event)
 	{
 		String message = event.getMessage();
+		String cleanMessage = Text.removeTags(message);
 
-		Matcher matcher = KC_PATTERN.matcher(message);
+		// Temporary testing log. Use info, not debug, so it shows in IntelliJ.
+		//log.info("CHAT RAW: {}", message);
+		//log.info("CHAT CLEAN: {}", cleanMessage);
+
+		Matcher matcher = KC_PATTERN.matcher(cleanMessage);
 
 		if (matcher.find())
 		{
-			currentSireKC = Integer.parseInt(matcher.group(1));
+			currentSireKC = Integer.parseInt(
+					matcher.group(1)
+							.replace(",", "")
+							.trim()
+			);
 
-			if (lastUnsiredKC > 0)
-			{
-				killsSinceLastUnsired =
-						currentSireKC - lastUnsiredKC;
-			}
+			recalculateKillsSinceLastUnsired();
 
 			saveCurrentStats();
+
+			//log.info("Updated Abyssal Sire KC to {}", currentSireKC);
 			return;
 		}
 
 		if (message.equals(UNSIRED_DROP_MESSAGE))
 		{
 			handleUnsiredDrop();
+		}
+	}
+
+	private void recalculateKillsSinceLastUnsired()
+	{
+		if (currentSireKC > 0 && lastUnsiredKC > 0 && currentSireKC >= lastUnsiredKC)
+		{
+			killsSinceLastUnsired = currentSireKC - lastUnsiredKC;
+		}
+		else
+		{
+			killsSinceLastUnsired = 0;
 		}
 	}
 
@@ -237,16 +322,7 @@ public class UnsiredTrackerPlugin extends Plugin
 		dryStreak = savedDry == null ? 0 : savedDry;
 		bestStreak = savedBest == null ? 0 : savedBest;
 
-		if (lastUnsiredKC == 0 && config.startingUnsiredKC() > 0)
-		{
-			lastUnsiredKC = config.startingUnsiredKC();
 
-			configManager.setRSProfileConfiguration(
-					"unsiredtracker",
-					"lastUnsiredKC",
-					lastUnsiredKC
-			);
-		}
 	}
 
 	private void saveCurrentStats()
@@ -261,6 +337,90 @@ public class UnsiredTrackerPlugin extends Plugin
 				"unsiredtracker",
 				"killsSinceLastUnsired",
 				killsSinceLastUnsired
+		);
+	}
+
+	private void saveAllStats()
+	{
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"currentSireKC",
+				currentSireKC
+		);
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"killsSinceLastUnsired",
+				killsSinceLastUnsired
+		);
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"lastUnsiredKC",
+				lastUnsiredKC
+		);
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"dryStreak",
+				dryStreak
+		);
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"bestStreak",
+				bestStreak
+		);
+	}
+
+	public void resetAllStats()
+	{
+		currentSireKC = 0;
+		killsSinceLastUnsired = 0;
+		lastUnsiredKC = 0;
+		dryStreak = 0;
+		bestStreak = 0;
+
+		saveAllStats();
+	}
+
+	public void resetLastUnsiredKC()
+	{
+		lastUnsiredKC = 0;
+		killsSinceLastUnsired = 0;
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"lastUnsiredKC",
+				lastUnsiredKC
+		);
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"killsSinceLastUnsired",
+				killsSinceLastUnsired
+		);
+	}
+
+	public void resetDryStreak()
+	{
+		dryStreak = 0;
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"dryStreak",
+				dryStreak
+		);
+	}
+
+	public void resetBestStreak()
+	{
+		bestStreak = 0;
+
+		configManager.setRSProfileConfiguration(
+				"unsiredtracker",
+				"bestStreak",
+				bestStreak
 		);
 	}
 

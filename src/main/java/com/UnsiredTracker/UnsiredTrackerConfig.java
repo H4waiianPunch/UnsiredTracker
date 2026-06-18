@@ -26,7 +26,8 @@ public interface UnsiredTrackerConfig extends Config
 			keyName = "currentKC",
 			name = "Current KC",
 			description = "Show current Abyssal Sire kill count.",
-			section = displaySection
+			section = displaySection,
+			position = 0
 	)
 	default boolean currentKC()
 	{
@@ -37,7 +38,8 @@ public interface UnsiredTrackerConfig extends Config
 			keyName = "lastUnsiredKC",
 			name = "Last Unsired KC",
 			description = "Show the kill count of your most recent Unsired.",
-			section = displaySection
+			section = displaySection,
+			position = 1
 	)
 	default boolean lastUnsiredKC()
 	{
@@ -48,7 +50,8 @@ public interface UnsiredTrackerConfig extends Config
 			keyName = "killsSinceLastUnsired",
 			name = "Current Dry",
 			description = "Show kills since your last Unsired.",
-			section = displaySection
+			section = displaySection,
+			position = 2
 	)
 	default boolean killsSinceLastUnsired()
 	{
@@ -59,7 +62,8 @@ public interface UnsiredTrackerConfig extends Config
 			keyName = "dryStreak",
 			name = "Longest Dry",
 			description = "Highest number of kills between Unsired drops.",
-			section = displaySection
+			section = displaySection,
+			position = 3
 	)
 	default boolean dryStreak()
 	{
@@ -70,7 +74,8 @@ public interface UnsiredTrackerConfig extends Config
 			keyName = "bestStreak",
 			name = "Most Spooned",
 			description = "Lowest number of kills between Unsired drops.",
-			section = displaySection
+			section = displaySection,
+			position = 4
 	)
 	default boolean bestStreak()
 	{
@@ -79,8 +84,8 @@ public interface UnsiredTrackerConfig extends Config
 
 	@ConfigItem(
 			keyName = "baselineUnsiredKC",
-			name = "Baseline Unsired KC",
-			description = "Used to establish your last known Unsired KC.",
+			name = "Last Unsired KC",
+			description = "Used to establish your last known Unsired KC. If unknown, do nothing.",
 			section = setupSection
 	)
 	default int baselineUnsiredKC()
@@ -90,8 +95,8 @@ public interface UnsiredTrackerConfig extends Config
 
 	@ConfigItem(
 			keyName = "applyBaselineKC",
-			name = "Apply Baseline KC",
-			description = "Apply the Baseline Unsired KC value.",
+			name = "Apply KC of last unsired",
+			description = "Check the box to set the value of 'Last Unsired KC' for the plugin.",
 			section = setupSection
 	)
 	default boolean applyBaselineKC()

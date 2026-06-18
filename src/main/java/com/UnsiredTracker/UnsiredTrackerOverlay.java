@@ -1,12 +1,13 @@
 package com.UnsiredTracker;
 
+import net.runelite.api.MenuAction;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayLayer;
+import net.runelite.client.ui.overlay.OverlayMenuEntry;
 import net.runelite.client.ui.overlay.OverlayPosition;
 import net.runelite.client.ui.overlay.OverlayPriority;
 import net.runelite.client.ui.overlay.components.LineComponent;
 import net.runelite.client.ui.overlay.components.PanelComponent;
-import net.runelite.client.ui.overlay.components.TitleComponent;
 
 import javax.inject.Inject;
 import java.awt.*;
@@ -24,6 +25,34 @@ public class UnsiredTrackerOverlay extends Overlay
         setPosition(OverlayPosition.TOP_LEFT);
         setLayer(OverlayLayer.ABOVE_WIDGETS);
         setPriority(OverlayPriority.HIGH);
+
+        getMenuEntries().add(
+                new OverlayMenuEntry(
+                        MenuAction.RUNELITE_OVERLAY,
+                        "Reset",
+                        "All Stats"
+                ));
+
+        getMenuEntries().add(
+                new OverlayMenuEntry(
+                        MenuAction.RUNELITE_OVERLAY,
+                        "Reset",
+                        "Last Unsired KC"
+                ));
+
+        getMenuEntries().add(
+                new OverlayMenuEntry(
+                        MenuAction.RUNELITE_OVERLAY,
+                        "Reset",
+                        "Longest Dry"
+                ));
+
+        getMenuEntries().add(
+                new OverlayMenuEntry(
+                        MenuAction.RUNELITE_OVERLAY,
+                        "Reset",
+                        "Most Spooned"
+                ));
     }
 
     @Override
@@ -35,7 +64,7 @@ public class UnsiredTrackerOverlay extends Overlay
         {
             panelComponent.getChildren().add(
                     LineComponent.builder()
-                            .left("Current KC: ")
+                            .left("Current KC")
                             .right(String.valueOf(plugin.getCurrentSireKC()))
                             .build()
             );
@@ -45,7 +74,7 @@ public class UnsiredTrackerOverlay extends Overlay
         {
             panelComponent.getChildren().add(
                     LineComponent.builder()
-                            .left("Last Unsired KC: ")
+                            .left("Last Unsired")
                             .right(String.valueOf(plugin.getLastUnsiredKC()))
                             .build()
             );
@@ -55,7 +84,7 @@ public class UnsiredTrackerOverlay extends Overlay
         {
             panelComponent.getChildren().add(
                     LineComponent.builder()
-                            .left("Current Dry: ")
+                            .left("Current Dry")
                             .right(String.valueOf(plugin.getKillsSinceLastUnsired()))
                             .build()
             );
@@ -65,7 +94,7 @@ public class UnsiredTrackerOverlay extends Overlay
         {
             panelComponent.getChildren().add(
                     LineComponent.builder()
-                            .left("Longest Dry: ")
+                            .left("Longest Dry")
                             .right(String.valueOf(plugin.getDryStreak()))
                             .build()
             );
@@ -75,7 +104,7 @@ public class UnsiredTrackerOverlay extends Overlay
         {
             panelComponent.getChildren().add(
                     LineComponent.builder()
-                            .left("Most Spooned: ")
+                            .left("Most Spooned")
                             .right(String.valueOf(plugin.getBestStreak()))
                             .build()
             );
