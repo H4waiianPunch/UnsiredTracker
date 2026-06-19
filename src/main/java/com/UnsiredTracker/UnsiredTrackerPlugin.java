@@ -178,11 +178,11 @@ public class UnsiredTrackerPlugin extends Plugin
 					false
 			);
 
-			log.debug(
+			/*log.debug(
 					"Applied baseline KC {}. Current KC: {}. Current dry: {}",
 					lastUnsiredKC,
 					currentSireKC,
-					killsSinceLastUnsired
+					killsSinceLastUnsired*/
 			);
 			/*if (config.simulateUnsiredDrop()) CAN USE THIS FOR TESTING PURPOSES
 			{
@@ -297,7 +297,7 @@ public class UnsiredTrackerPlugin extends Plugin
 				killsSinceLastUnsired
 		);
 
-		log.debug("Unsired received at KC {}", currentSireKC);
+		//log.debug("Unsired received at KC {}", currentSireKC);
 	}
 
 	private void loadProfileData()
