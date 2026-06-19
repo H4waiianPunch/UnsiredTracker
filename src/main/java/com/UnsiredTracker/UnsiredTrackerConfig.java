@@ -34,6 +34,17 @@ public interface UnsiredTrackerConfig extends Config
 		return true;
 	}
 
+/*	@ConfigItem( CAN USE THIS FOR TESTING PURPOSES
+			keyName = "simulateUnsiredDrop",
+			name = "Simulate Unsired Drop",
+			description = "Testing only: simulate receiving an Unsired drop using your current KC.",
+			section = setupSection
+	)
+	default boolean simulateUnsiredDrop()
+	{
+		return false;
+	}*/
+
 	@ConfigItem(
 			keyName = "lastUnsiredKC",
 			name = "Last Unsired KC",

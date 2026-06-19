@@ -44,6 +44,7 @@ public class UnsiredTrackerPlugin extends Plugin
 	private static final String UNSIRED_DROP_MESSAGE =
 			"<col=ef1020>Untradeable drop: Unsired</col>";
 
+
 	@Inject
 	private Client client;
 
@@ -183,6 +184,26 @@ public class UnsiredTrackerPlugin extends Plugin
 					currentSireKC,
 					killsSinceLastUnsired
 			);
+			/*if (config.simulateUnsiredDrop()) CAN USE THIS FOR TESTING PURPOSES
+			{
+				handleUnsiredDrop();
+
+				configManager.setConfiguration(
+						"unsiredtracker",
+						"simulateUnsiredDrop",
+						false
+				);
+
+				log.info(
+						"Simulated Unsired drop at KC {}. Last Unsired KC: {}. Current Dry: {}. Longest Dry: {}. Most Spooned: {}",
+						currentSireKC,
+						lastUnsiredKC,
+						killsSinceLastUnsired,
+						dryStreak,
+						bestStreak
+				);
+			}*/
+
 		}
 	}
 
