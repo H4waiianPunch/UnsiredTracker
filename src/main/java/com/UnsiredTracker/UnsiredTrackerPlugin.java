@@ -182,8 +182,8 @@ public class UnsiredTrackerPlugin extends Plugin
 					"Applied baseline KC {}. Current KC: {}. Current dry: {}",
 					lastUnsiredKC,
 					currentSireKC,
-					killsSinceLastUnsired*/
-			);
+					killsSinceLastUnsired
+			);*/
 			/*if (config.simulateUnsiredDrop()) CAN USE THIS FOR TESTING PURPOSES
 			{
 				handleUnsiredDrop();
