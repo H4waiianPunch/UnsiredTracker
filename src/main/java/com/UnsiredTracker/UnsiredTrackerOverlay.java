@@ -90,6 +90,16 @@ public class UnsiredTrackerOverlay extends Overlay
             );
         }
 
+        if (plugin.getConfig().lastDry())
+        {
+            panelComponent.getChildren().add(
+                    LineComponent.builder()
+                            .left("Last Dry")
+                            .right(String.valueOf(plugin.getLastDry()))
+                            .build()
+            );
+        }
+
         if (plugin.getConfig().dryStreak())
         {
             panelComponent.getChildren().add(
