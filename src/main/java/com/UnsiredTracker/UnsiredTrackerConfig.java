@@ -34,16 +34,18 @@ public interface UnsiredTrackerConfig extends Config
 		return true;
 	}
 
-/*	@ConfigItem( CAN USE THIS FOR TESTING PURPOSES
-			keyName = "simulateUnsiredDrop",
-			name = "Simulate Unsired Drop",
-			description = "Testing only: simulate receiving an Unsired drop using your current KC.",
-			section = setupSection
-	)
-	default boolean simulateUnsiredDrop()
-	{
-		return false;
-	}*/
+    /*
+    @ConfigItem( // CAN USE THIS FOR TESTING PURPOSES
+            keyName = "simulateUnsiredDrop",
+            name = "Simulate Unsired Drop",
+            description = "Testing only: simulate receiving an Unsired drop using your current KC.",
+            section = setupSection
+    )
+    default boolean simulateUnsiredDrop()
+    {
+        return false;
+    }
+    */
 
 	@ConfigItem(
 			keyName = "lastUnsiredKC",
@@ -70,11 +72,23 @@ public interface UnsiredTrackerConfig extends Config
 	}
 
 	@ConfigItem(
+			keyName = "lastDry",
+			name = "Last Dry",
+			description = "Show how many kills it took to get your most recent Unsired.",
+			section = displaySection,
+			position = 3
+	)
+	default boolean lastDry()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 			keyName = "dryStreak",
 			name = "Longest Dry",
 			description = "Highest number of kills between Unsired drops.",
 			section = displaySection,
-			position = 3
+			position = 4
 	)
 	default boolean dryStreak()
 	{
@@ -86,7 +100,7 @@ public interface UnsiredTrackerConfig extends Config
 			name = "Most Spooned",
 			description = "Lowest number of kills between Unsired drops.",
 			section = displaySection,
-			position = 4
+			position = 5
 	)
 	default boolean bestStreak()
 	{
@@ -97,7 +111,8 @@ public interface UnsiredTrackerConfig extends Config
 			keyName = "baselineUnsiredKC",
 			name = "Last Unsired KC",
 			description = "Used to establish your last known Unsired KC. If unknown, do nothing.",
-			section = setupSection
+			section = setupSection,
+			position = 0
 	)
 	default int baselineUnsiredKC()
 	{
@@ -108,7 +123,8 @@ public interface UnsiredTrackerConfig extends Config
 			keyName = "applyBaselineKC",
 			name = "Apply KC of last unsired",
 			description = "Check the box to set the value of 'Last Unsired KC' for the plugin.",
-			section = setupSection
+			section = setupSection,
+			position = 1
 	)
 	default boolean applyBaselineKC()
 	{

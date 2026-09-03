@@ -7,15 +7,15 @@ import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.ChatMessage;
-import net.runelite.client.events.ConfigChanged;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
-import net.runelite.client.events.OverlayMenuClicked;
 import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 )
 public class UnsiredTrackerPlugin extends Plugin
 {
+	private static final String CONFIG_GROUP = "unsiredtracker";
+
 	private static final Set<Integer> ABYSSAL_NEXUS_REGIONS = Set.of(
 			11850,
 			11851,
@@ -37,13 +39,11 @@ public class UnsiredTrackerPlugin extends Plugin
 			12363
 	);
 
-
 	private static final Pattern KC_PATTERN =
 			Pattern.compile("Your Abyssal Sire kill count is: ([\\d,]+)");
 
 	private static final String UNSIRED_DROP_MESSAGE =
 			"<col=ef1020>Untradeable drop: Unsired</col>";
-
 
 	@Inject
 	private Client client;
@@ -64,7 +64,7 @@ public class UnsiredTrackerPlugin extends Plugin
 
 	private int currentSireKC;
 	private int killsSinceLastUnsired;
-
+	private int lastDry;
 	private int lastUnsiredKC;
 	private int dryStreak;
 	private int bestStreak;
@@ -78,6 +78,8 @@ public class UnsiredTrackerPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		saveAllStats();
+
 		overlayManager.remove(overlay);
 		overlayAdded = false;
 	}
@@ -160,12 +162,15 @@ public class UnsiredTrackerPlugin extends Plugin
 	}
 
 	@Subscribe
-	public void onConfigChanged(ConfigChanged event) {
-		if (!event.getGroup().equals("unsiredtracker")) {
+	public void onConfigChanged(ConfigChanged event)
+	{
+		if (!CONFIG_GROUP.equals(event.getGroup()))
+		{
 			return;
 		}
 
-		if (config.applyBaselineKC()) {
+		if (config.applyBaselineKC())
+		{
 			lastUnsiredKC = config.baselineUnsiredKC();
 
 			recalculateKillsSinceLastUnsired();
@@ -173,38 +178,45 @@ public class UnsiredTrackerPlugin extends Plugin
 			saveAllStats();
 
 			configManager.setConfiguration(
-					"unsiredtracker",
+					CONFIG_GROUP,
 					"applyBaselineKC",
 					false
 			);
 
-			/*log.debug(
-					"Applied baseline KC {}. Current KC: {}. Current dry: {}",
-					lastUnsiredKC,
-					currentSireKC,
-					killsSinceLastUnsired
-			);*/
-			/*if (config.simulateUnsiredDrop()) CAN USE THIS FOR TESTING PURPOSES
-			{
-				handleUnsiredDrop();
-
-				configManager.setConfiguration(
-						"unsiredtracker",
-						"simulateUnsiredDrop",
-						false
-				);
-
-				log.info(
-						"Simulated Unsired drop at KC {}. Last Unsired KC: {}. Current Dry: {}. Longest Dry: {}. Most Spooned: {}",
-						currentSireKC,
-						lastUnsiredKC,
-						killsSinceLastUnsired,
-						dryStreak,
-						bestStreak
-				);
-			}*/
-
+            /*
+            log.debug(
+                    "Applied baseline KC {}. Current KC: {}. Current dry: {}",
+                    lastUnsiredKC,
+                    currentSireKC,
+                    killsSinceLastUnsired
+            );
+            */
 		}
+
+        /*
+        // CAN USE THIS FOR TESTING PURPOSES
+        // Only uncomment this if simulateUnsiredDrop() exists in UnsiredTrackerConfig.
+        if (config.simulateUnsiredDrop())
+        {
+            handleUnsiredDrop();
+
+            configManager.setConfiguration(
+                    CONFIG_GROUP,
+                    "simulateUnsiredDrop",
+                    false
+            );
+
+            log.info(
+                    "Simulated Unsired drop at KC {}. Last Unsired KC: {}. Current Dry: {}. Last Dry: {}. Longest Dry: {}. Most Spooned: {}",
+                    currentSireKC,
+                    lastUnsiredKC,
+                    killsSinceLastUnsired,
+                    lastDry,
+                    dryStreak,
+                    bestStreak
+            );
+        }
+        */
 	}
 
 	@Subscribe
@@ -213,7 +225,7 @@ public class UnsiredTrackerPlugin extends Plugin
 		String message = event.getMessage();
 		String cleanMessage = Text.removeTags(message);
 
-		// Temporary testing log. Use info, not debug, so it shows in IntelliJ.
+		// Temporary testing logs. Use info, not debug, so they show in IntelliJ.
 		//log.info("CHAT RAW: {}", message);
 		//log.info("CHAT CLEAN: {}", cleanMessage);
 
@@ -255,84 +267,80 @@ public class UnsiredTrackerPlugin extends Plugin
 
 	private void handleUnsiredDrop()
 	{
+		if (currentSireKC <= 0)
+		{
+			log.debug("Unsired received, but current Sire KC is unknown. Drop ignored.");
+			return;
+		}
+
 		if (lastUnsiredKC > 0)
 		{
 			int gap = currentSireKC - lastUnsiredKC;
 
-			if (gap > dryStreak)
+			if (gap > 0)
 			{
-				dryStreak = gap;
+				lastDry = gap;
 
-				configManager.setRSProfileConfiguration(
-						"unsiredtracker",
-						"dryStreak",
-						dryStreak
-				);
-			}
+				if (gap > dryStreak)
+				{
+					dryStreak = gap;
+				}
 
-			if (bestStreak == 0 || gap < bestStreak)
-			{
-				bestStreak = gap;
-
-				configManager.setRSProfileConfiguration(
-						"unsiredtracker",
-						"bestStreak",
-						bestStreak
-				);
+				if (bestStreak == 0 || gap < bestStreak)
+				{
+					bestStreak = gap;
+				}
 			}
 		}
 
 		lastUnsiredKC = currentSireKC;
 		killsSinceLastUnsired = 0;
 
-		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
-				"lastUnsiredKC",
-				lastUnsiredKC
-		);
+		saveAllStats();
 
-		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
-				"killsSinceLastUnsired",
-				killsSinceLastUnsired
-		);
-
-		//log.debug("Unsired received at KC {}", currentSireKC);
+		//log.debug("Unsired received at KC {}. Last dry: {}", currentSireKC, lastDry);
 	}
 
 	private void loadProfileData()
 	{
 		Integer savedCurrentKC =
 				configManager.getRSProfileConfiguration(
-						"unsiredtracker",
+						CONFIG_GROUP,
 						"currentSireKC",
 						Integer.class
 				);
 
 		Integer savedKillsSince =
 				configManager.getRSProfileConfiguration(
-						"unsiredtracker",
+						CONFIG_GROUP,
 						"killsSinceLastUnsired",
 						Integer.class
 				);
 
 		Integer savedLastUnsired =
 				configManager.getRSProfileConfiguration(
-						"unsiredtracker",
+						CONFIG_GROUP,
 						"lastUnsiredKC",
+						Integer.class
+				);
+
+		Integer savedLastDry =
+				configManager.getRSProfileConfiguration(
+						CONFIG_GROUP,
+						"lastDry",
 						Integer.class
 				);
 
 		Integer savedDry =
 				configManager.getRSProfileConfiguration(
-						"unsiredtracker",
+						CONFIG_GROUP,
 						"dryStreak",
 						Integer.class
 				);
 
 		Integer savedBest =
 				configManager.getRSProfileConfiguration(
-						"unsiredtracker",
+						CONFIG_GROUP,
 						"bestStreak",
 						Integer.class
 				);
@@ -340,22 +348,21 @@ public class UnsiredTrackerPlugin extends Plugin
 		currentSireKC = savedCurrentKC == null ? 0 : savedCurrentKC;
 		killsSinceLastUnsired = savedKillsSince == null ? 0 : savedKillsSince;
 		lastUnsiredKC = savedLastUnsired == null ? 0 : savedLastUnsired;
+		lastDry = savedLastDry == null ? 0 : savedLastDry;
 		dryStreak = savedDry == null ? 0 : savedDry;
 		bestStreak = savedBest == null ? 0 : savedBest;
-
-
 	}
 
 	private void saveCurrentStats()
 	{
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"currentSireKC",
 				currentSireKC
 		);
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"killsSinceLastUnsired",
 				killsSinceLastUnsired
 		);
@@ -364,31 +371,37 @@ public class UnsiredTrackerPlugin extends Plugin
 	private void saveAllStats()
 	{
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"currentSireKC",
 				currentSireKC
 		);
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"killsSinceLastUnsired",
 				killsSinceLastUnsired
 		);
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"lastUnsiredKC",
 				lastUnsiredKC
 		);
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
+				"lastDry",
+				lastDry
+		);
+
+		configManager.setRSProfileConfiguration(
+				CONFIG_GROUP,
 				"dryStreak",
 				dryStreak
 		);
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"bestStreak",
 				bestStreak
 		);
@@ -399,6 +412,7 @@ public class UnsiredTrackerPlugin extends Plugin
 		currentSireKC = 0;
 		killsSinceLastUnsired = 0;
 		lastUnsiredKC = 0;
+		lastDry = 0;
 		dryStreak = 0;
 		bestStreak = 0;
 
@@ -411,13 +425,13 @@ public class UnsiredTrackerPlugin extends Plugin
 		killsSinceLastUnsired = 0;
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"lastUnsiredKC",
 				lastUnsiredKC
 		);
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"killsSinceLastUnsired",
 				killsSinceLastUnsired
 		);
@@ -428,7 +442,7 @@ public class UnsiredTrackerPlugin extends Plugin
 		dryStreak = 0;
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"dryStreak",
 				dryStreak
 		);
@@ -439,7 +453,7 @@ public class UnsiredTrackerPlugin extends Plugin
 		bestStreak = 0;
 
 		configManager.setRSProfileConfiguration(
-				"unsiredtracker",
+				CONFIG_GROUP,
 				"bestStreak",
 				bestStreak
 		);
@@ -471,6 +485,11 @@ public class UnsiredTrackerPlugin extends Plugin
 	public int getKillsSinceLastUnsired()
 	{
 		return killsSinceLastUnsired;
+	}
+
+	public int getLastDry()
+	{
+		return lastDry;
 	}
 
 	public int getDryStreak()
